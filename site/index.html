@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Literature Portal</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="panel hero" id="public-view">
+        <p class="eyebrow">AWS Cognito Authentication</p>
+        <h1>Literature Portal</h1>
+        <p class="lead">
+          文献ビューアやアップロード機能を後から載せる前提で、先に認証付きの入口だけを用意した構成です。
+        </p>
+        <button id="login-button" class="button primary">Cognito でログイン</button>
+      </section>
+
+      <section class="panel hidden" id="private-view">
+        <div class="header-row">
+          <div>
+            <p class="eyebrow">Authenticated Session</p>
+            <h2>ログイン済みホーム</h2>
+          </div>
+          <button id="logout-button" class="button secondary">ログアウト</button>
+        </div>
+        <dl class="profile">
+          <div>
+            <dt>メールアドレス</dt>
+            <dd id="user-email">-</dd>
+          </div>
+          <div>
+            <dt>サブジェクト</dt>
+            <dd id="user-sub">-</dd>
+          </div>
+        </dl>
+        <div class="note">
+          次の拡張では、この領域に文献一覧やアップロード導線を追加します。
+        </div>
+      </section>
+    </main>
+
+    <script src="./config.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

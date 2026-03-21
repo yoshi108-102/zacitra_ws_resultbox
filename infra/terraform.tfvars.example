@@ -1,0 +1,7 @@
+project_name           = "literature-auth-demo"
+aws_region             = "ap-northeast-1"
+cognito_domain_prefix  = "literature-auth-demo-example"
+
+tags = {
+  Environment = "dev"
+}
