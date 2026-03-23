@@ -5,9 +5,20 @@ from typing import Any
 from botocore.exceptions import ClientError
 
 from services.auth import AuthError, get_user_sub
-from services.document_repo import get_document, mark_document_ready
+from services.document_repo import delete_document_record, get_document, mark_document_ready
 from services.http import error_response, json_response
-from services.storage import head_document
+from services.storage import delete_document_object, head_document
+
+
+def _cleanup_failed_upload(owner_sub: str, document_id: str, s3_key: str) -> None:
+    try:
+        delete_document_object(s3_key)
+    except ClientError:
+        pass
+    try:
+        delete_document_record(owner_sub, document_id)
+    except ClientError:
+        pass
 
 
 def handler(event: dict, _context: Any) -> dict:
@@ -36,6 +47,7 @@ def handler(event: dict, _context: Any) -> dict:
 
     content_type = str(metadata.get("ContentType") or "").lower()
     if content_type != "application/pdf":
+        _cleanup_failed_upload(owner_sub, document_id, record.s3_key)
         return error_response(400, "Uploaded object is not a PDF.", code="invalid_content_type")
 
     try:
@@ -45,6 +57,11 @@ def handler(event: dict, _context: Any) -> dict:
             file_size=int(metadata.get("ContentLength", 0)),
         )
     except ClientError:
-        return error_response(500, "Failed to finalize upload.", code="complete_failed")
+        _cleanup_failed_upload(owner_sub, document_id, record.s3_key)
+        return error_response(
+            500,
+            "Failed to finalize upload. The uploaded file was removed.",
+            code="complete_failed",
+        )
 
     return json_response(200, updated.to_public_dict())

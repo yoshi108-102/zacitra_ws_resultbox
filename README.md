@@ -7,7 +7,7 @@ Terraform で以下を構築する最小構成です。
 - 非公開 S3 バケット
 - CloudFront Distribution + Origin Access Control
 - Cognito ログインを使う静的フロント
-- PDF アップロード用の S3 / DynamoDB / API Gateway / Lambda
+- PDF アップロード / フォルダ管理用の S3 / DynamoDB / API Gateway / Lambda
 
 ## 構成
 
@@ -80,15 +80,20 @@ aws s3 sync site/ "s3://$(cd infra && terraform output -raw site_bucket_name)" -
 - `upload_url_expires_seconds`: S3 へのアップロード URL 有効期限
 - `download_url_expires_seconds`: PDF 表示用 URL 有効期限
 
-## PDF アップロードの流れ
+## PDF / フォルダ管理の流れ
 
-1. ログイン後、静的フロントが Cognito の `access_token` を使って `POST /uploads` を呼びます
-2. API は presigned `PUT` URL を返し、ブラウザが PDF を S3 へ直接アップロードします
-3. フロントは `POST /documents/{id}/complete` を呼び、DynamoDB 上の状態を `ready` に更新します
-4. `GET /documents` で一覧取得、`GET /documents/{id}/download-url` で一時 URL を発行して PDF を開きます
+1. ログイン後、静的フロントが Cognito の `access_token` を使って `GET /documents` と `GET /folders` を呼びます
+2. 必要なら `POST /folders` でフォルダを作成します
+3. `POST /uploads` に `folder_id` を含めて呼ぶと、指定フォルダ配下向けの presigned `PUT` URL が返ります
+4. ブラウザが PDF を S3 へ直接アップロードします
+5. フロントは `POST /documents/{id}/complete` を呼び、DynamoDB 上の状態を `ready` に更新します
+6. アップロード失敗時は `DELETE /documents/{id}` を呼び、S3 オブジェクトとメタデータを掃除します
+7. `POST /documents/{id}/move` で PDF を別フォルダへ移動でき、`DELETE /documents/{id}` で削除できます
+8. `GET /documents/{id}/download-url` で一時 URL を発行して PDF を開きます
 
 ## API 実装メモ
 
 - `api/` 配下の Python コードは `uv` 前提です
 - Lambda は Terraform の `archive_file` で `api/src` を zip 化してデプロイします
 - API Gateway 側で Cognito JWT authorizer を使うため、Lambda 側で署名検証コードは持っていません
+- フォルダは単一階層で管理し、文書は `folder_id` が未設定ならルート直下として扱います

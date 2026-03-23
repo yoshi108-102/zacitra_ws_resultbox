@@ -63,15 +63,30 @@
             <div class="section-heading">
               <div>
                 <p class="eyebrow">Stored PDFs</p>
-                <h3>アップロード済み文書</h3>
+                <h3>フォルダと文書</h3>
               </div>
               <button id="refresh-documents-button" class="button secondary" type="button">
                 再読み込み
               </button>
             </div>
             <p class="section-copy">
-              表示時は一時的なダウンロード URL を発行して新しいタブで開きます。
+              フォルダを作成し、PDF を移動・削除できます。表示時は一時的なダウンロード URL を発行します。
             </p>
+            <form id="folder-form" class="inline-form">
+              <input
+                id="folder-name"
+                class="text-input"
+                type="text"
+                maxlength="80"
+                placeholder="新しいフォルダ名"
+                required
+              />
+              <button id="create-folder-button" class="button secondary" type="submit">
+                フォルダ作成
+              </button>
+            </form>
+            <div class="folder-list" id="folder-list" aria-label="フォルダ一覧"></div>
+            <p class="current-folder" id="current-folder-label">表示中: ルート</p>
             <p class="empty-state" id="documents-empty">まだ PDF はありません。</p>
             <ul class="document-list hidden" id="documents-list"></ul>
           </section>

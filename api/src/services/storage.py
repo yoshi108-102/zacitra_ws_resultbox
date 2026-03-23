@@ -52,9 +52,16 @@ def generate_document_id() -> str:
     return uuid.uuid4().hex
 
 
-def build_document_key(owner_sub: str, document_id: str, file_name: str) -> str:
+def build_document_key(
+    owner_sub: str,
+    document_id: str,
+    file_name: str,
+    *,
+    folder_id: str | None = None,
+) -> str:
     safe_stem = _sanitize_file_stem(file_name)
-    return f"documents/{owner_sub}/{document_id}/{safe_stem}.pdf"
+    folder_segment = f"folders/{folder_id}" if folder_id else "root"
+    return f"documents/{owner_sub}/{folder_segment}/{document_id}/{safe_stem}.pdf"
 
 
 def create_presigned_upload_url(s3_key: str, content_type: str) -> dict[str, Any]:
@@ -97,3 +104,18 @@ def head_document(s3_key: str) -> dict[str, Any] | None:
         if error.response.get("Error", {}).get("Code") in {"404", "NoSuchKey", "NotFound"}:
             return None
         raise
+
+
+def copy_document_object(source_key: str, destination_key: str) -> None:
+    _s3_client.copy_object(
+        Bucket=_bucket_name(),
+        CopySource={
+            "Bucket": _bucket_name(),
+            "Key": source_key,
+        },
+        Key=destination_key,
+    )
+
+
+def delete_document_object(s3_key: str) -> None:
+    _s3_client.delete_object(Bucket=_bucket_name(), Key=s3_key)

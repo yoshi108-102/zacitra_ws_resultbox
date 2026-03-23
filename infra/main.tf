@@ -348,6 +348,7 @@ data "aws_iam_policy_document" "documents_api_permissions" {
     actions = [
       "s3:GetObject",
       "s3:PutObject",
+      "s3:DeleteObject",
     ]
     resources = ["${aws_s3_bucket.documents.arn}/*"]
   }
@@ -361,6 +362,7 @@ data "aws_iam_policy_document" "documents_api_permissions" {
       "dynamodb:PutItem",
       "dynamodb:Query",
       "dynamodb:UpdateItem",
+      "dynamodb:DeleteItem",
     ]
     resources = [aws_dynamodb_table.documents.arn]
   }
@@ -460,6 +462,94 @@ resource "aws_lambda_function" "get_download_url" {
   tags = local.common_tags
 }
 
+resource "aws_lambda_function" "create_folder" {
+  function_name    = "${var.project_name}-create-folder"
+  role             = aws_iam_role.documents_api.arn
+  runtime          = "python3.12"
+  handler          = "handlers.create_folder.handler"
+  filename         = data.archive_file.documents_api.output_path
+  source_code_hash = data.archive_file.documents_api.output_base64sha256
+  timeout          = 15
+
+  environment {
+    variables = {
+      DOCUMENTS_BUCKET_NAME        = aws_s3_bucket.documents.bucket
+      DOCUMENTS_TABLE_NAME         = aws_dynamodb_table.documents.name
+      MAX_PDF_SIZE_BYTES           = tostring(var.documents_max_upload_bytes)
+      UPLOAD_URL_EXPIRES_SECONDS   = tostring(var.upload_url_expires_seconds)
+      DOWNLOAD_URL_EXPIRES_SECONDS = tostring(var.download_url_expires_seconds)
+    }
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_lambda_function" "list_folders" {
+  function_name    = "${var.project_name}-list-folders"
+  role             = aws_iam_role.documents_api.arn
+  runtime          = "python3.12"
+  handler          = "handlers.list_folders.handler"
+  filename         = data.archive_file.documents_api.output_path
+  source_code_hash = data.archive_file.documents_api.output_base64sha256
+  timeout          = 15
+
+  environment {
+    variables = {
+      DOCUMENTS_BUCKET_NAME        = aws_s3_bucket.documents.bucket
+      DOCUMENTS_TABLE_NAME         = aws_dynamodb_table.documents.name
+      MAX_PDF_SIZE_BYTES           = tostring(var.documents_max_upload_bytes)
+      UPLOAD_URL_EXPIRES_SECONDS   = tostring(var.upload_url_expires_seconds)
+      DOWNLOAD_URL_EXPIRES_SECONDS = tostring(var.download_url_expires_seconds)
+    }
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_lambda_function" "move_document" {
+  function_name    = "${var.project_name}-move-document"
+  role             = aws_iam_role.documents_api.arn
+  runtime          = "python3.12"
+  handler          = "handlers.move_document.handler"
+  filename         = data.archive_file.documents_api.output_path
+  source_code_hash = data.archive_file.documents_api.output_base64sha256
+  timeout          = 15
+
+  environment {
+    variables = {
+      DOCUMENTS_BUCKET_NAME        = aws_s3_bucket.documents.bucket
+      DOCUMENTS_TABLE_NAME         = aws_dynamodb_table.documents.name
+      MAX_PDF_SIZE_BYTES           = tostring(var.documents_max_upload_bytes)
+      UPLOAD_URL_EXPIRES_SECONDS   = tostring(var.upload_url_expires_seconds)
+      DOWNLOAD_URL_EXPIRES_SECONDS = tostring(var.download_url_expires_seconds)
+    }
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_lambda_function" "delete_document" {
+  function_name    = "${var.project_name}-delete-document"
+  role             = aws_iam_role.documents_api.arn
+  runtime          = "python3.12"
+  handler          = "handlers.delete_document.handler"
+  filename         = data.archive_file.documents_api.output_path
+  source_code_hash = data.archive_file.documents_api.output_base64sha256
+  timeout          = 15
+
+  environment {
+    variables = {
+      DOCUMENTS_BUCKET_NAME        = aws_s3_bucket.documents.bucket
+      DOCUMENTS_TABLE_NAME         = aws_dynamodb_table.documents.name
+      MAX_PDF_SIZE_BYTES           = tostring(var.documents_max_upload_bytes)
+      UPLOAD_URL_EXPIRES_SECONDS   = tostring(var.upload_url_expires_seconds)
+      DOWNLOAD_URL_EXPIRES_SECONDS = tostring(var.download_url_expires_seconds)
+    }
+  }
+
+  tags = local.common_tags
+}
+
 resource "aws_apigatewayv2_integration" "create_upload" {
   api_id                 = aws_apigatewayv2_api.documents.id
   integration_type       = "AWS_PROXY"
@@ -485,6 +575,34 @@ resource "aws_apigatewayv2_integration" "get_download_url" {
   api_id                 = aws_apigatewayv2_api.documents.id
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.get_download_url.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "create_folder" {
+  api_id                 = aws_apigatewayv2_api.documents.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.create_folder.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "list_folders" {
+  api_id                 = aws_apigatewayv2_api.documents.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.list_folders.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "move_document" {
+  api_id                 = aws_apigatewayv2_api.documents.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.move_document.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "delete_document" {
+  api_id                 = aws_apigatewayv2_api.documents.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.delete_document.invoke_arn
   payload_format_version = "2.0"
 }
 
@@ -520,6 +638,38 @@ resource "aws_apigatewayv2_route" "get_download_url" {
   authorizer_id      = aws_apigatewayv2_authorizer.documents_jwt.id
 }
 
+resource "aws_apigatewayv2_route" "create_folder" {
+  api_id             = aws_apigatewayv2_api.documents.id
+  route_key          = "POST /folders"
+  target             = "integrations/${aws_apigatewayv2_integration.create_folder.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.documents_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "list_folders" {
+  api_id             = aws_apigatewayv2_api.documents.id
+  route_key          = "GET /folders"
+  target             = "integrations/${aws_apigatewayv2_integration.list_folders.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.documents_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "move_document" {
+  api_id             = aws_apigatewayv2_api.documents.id
+  route_key          = "POST /documents/{document_id}/move"
+  target             = "integrations/${aws_apigatewayv2_integration.move_document.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.documents_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "delete_document" {
+  api_id             = aws_apigatewayv2_api.documents.id
+  route_key          = "DELETE /documents/{document_id}"
+  target             = "integrations/${aws_apigatewayv2_integration.delete_document.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.documents_jwt.id
+}
+
 resource "aws_lambda_permission" "create_upload" {
   statement_id  = "AllowCreateUploadFromApiGateway"
   action        = "lambda:InvokeFunction"
@@ -548,6 +698,38 @@ resource "aws_lambda_permission" "get_download_url" {
   statement_id  = "AllowGetDownloadUrlFromApiGateway"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.get_download_url.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.documents.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "create_folder" {
+  statement_id  = "AllowCreateFolderFromApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.create_folder.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.documents.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "list_folders" {
+  statement_id  = "AllowListFoldersFromApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.list_folders.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.documents.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "move_document" {
+  statement_id  = "AllowMoveDocumentFromApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.move_document.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.documents.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "delete_document" {
+  statement_id  = "AllowDeleteDocumentFromApiGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.delete_document.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.documents.execution_arn}/*/*"
 }
