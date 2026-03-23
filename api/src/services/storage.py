@@ -5,12 +5,23 @@ import re
 import uuid
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 
-_s3_client = boto3.client("s3")
+_s3_client = boto3.client(
+    "s3",
+    region_name=os.environ.get("AWS_REGION"),
+    config=Config(
+        signature_version="s3v4",
+        s3={
+            "addressing_style": "virtual",
+        },
+    ),
+)
 
 
 def _bucket_name() -> str:
@@ -28,6 +39,13 @@ def _download_expires_seconds() -> int:
 def _sanitize_file_stem(file_name: str) -> str:
     stem = Path(file_name).stem or "document"
     return re.sub(r"[^A-Za-z0-9._-]", "-", stem)[:80] or "document"
+
+
+def _build_download_content_disposition(file_name: str) -> str:
+    suffix = Path(file_name).suffix.lower() or ".pdf"
+    ascii_file_name = f"{_sanitize_file_stem(file_name)}{suffix}"
+    utf8_file_name = quote(file_name, safe="")
+    return f"inline; filename=\"{ascii_file_name}\"; filename*=UTF-8''{utf8_file_name}"
 
 
 def generate_document_id() -> str:
@@ -56,14 +74,13 @@ def create_presigned_upload_url(s3_key: str, content_type: str) -> dict[str, Any
 
 
 def create_presigned_download_url(s3_key: str, file_name: str) -> dict[str, Any]:
-    safe_file_name = file_name.replace('"', "")
     url = _s3_client.generate_presigned_url(
         "get_object",
         Params={
             "Bucket": _bucket_name(),
             "Key": s3_key,
             "ResponseContentType": "application/pdf",
-            "ResponseContentDisposition": f'inline; filename="{safe_file_name}"',
+            "ResponseContentDisposition": _build_download_content_disposition(file_name),
         },
         ExpiresIn=_download_expires_seconds(),
     )
