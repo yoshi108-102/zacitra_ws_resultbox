@@ -38,6 +38,10 @@ cp infra/terraform.tfvars.example infra/terraform.tfvars
 
 2. `infra/terraform.tfvars` を編集します
 
+`project_name` と `cognito_domain_prefix` には dev 用のデフォルト値を入れてあるので、
+そのまま試すだけなら `terraform.tfvars` なしでも動きます。
+もし Cognito ドメインが既に使われていたら `cognito_domain_prefix` だけ変更してください。
+
 3. デプロイします
 
 ```bash
