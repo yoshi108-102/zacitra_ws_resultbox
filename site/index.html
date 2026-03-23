@@ -35,8 +35,46 @@
             <dd id="user-sub">-</dd>
           </div>
         </dl>
-        <div class="note">
-          次の拡張では、この領域に文献一覧やアップロード導線を追加します。
+
+        <div class="dashboard-grid">
+          <section class="dashboard-card">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Upload PDF</p>
+                <h3>文書アップロード</h3>
+              </div>
+            </div>
+            <p class="section-copy">
+              最初の段階では PDF のみ受け付けます。アップロード後に一覧へ反映されます。
+            </p>
+            <form id="upload-form" class="upload-form">
+              <label class="file-field" for="pdf-file">
+                <span class="field-label">PDFファイルを選択</span>
+                <input id="pdf-file" type="file" accept=".pdf,application/pdf" required />
+              </label>
+              <button id="upload-button" class="button primary" type="submit">アップロード</button>
+            </form>
+            <p class="status-text" id="upload-status" aria-live="polite">
+              25MB 以下の PDF をアップロードできます。
+            </p>
+          </section>
+
+          <section class="dashboard-card">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Stored PDFs</p>
+                <h3>アップロード済み文書</h3>
+              </div>
+              <button id="refresh-documents-button" class="button secondary" type="button">
+                再読み込み
+              </button>
+            </div>
+            <p class="section-copy">
+              表示時は一時的なダウンロード URL を発行して新しいタブで開きます。
+            </p>
+            <p class="empty-state" id="documents-empty">まだ PDF はありません。</p>
+            <ul class="document-list hidden" id="documents-list"></ul>
+          </section>
         </div>
       </section>
     </main>

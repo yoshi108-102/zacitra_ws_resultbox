@@ -3,5 +3,8 @@
 terraform.tfstate
 terraform.tfstate.*
 dist/
+build/
 node_modules/
 site/config.js
+__pycache__/
+*.pyc

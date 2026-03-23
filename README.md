@@ -7,6 +7,7 @@ Terraform で以下を構築する最小構成です。
 - 非公開 S3 バケット
 - CloudFront Distribution + Origin Access Control
 - Cognito ログインを使う静的フロント
+- PDF アップロード用の S3 / DynamoDB / API Gateway / Lambda
 
 ## 構成
 
@@ -24,6 +25,7 @@ Terraform で以下を構築する最小構成です。
 ## ディレクトリ
 
 - `infra/`: Terraform
+- `api/`: PDF アップロード API 用 Lambda コード
 - `site/`: 配信する静的フロント
 
 ## 使い方
@@ -53,6 +55,7 @@ terraform apply
   "$(cd infra && terraform output -raw cognito_hosted_ui_domain)" \
   "$(cd infra && terraform output -raw cognito_user_pool_client_id)" \
   "$(cd infra && terraform output -raw cloudfront_domain_name)" \
+  "$(cd infra && terraform output -raw documents_api_base_url)" \
   > site/config.js
 ```
 
@@ -69,12 +72,19 @@ aws s3 sync site/ "s3://$(cd infra && terraform output -raw site_bucket_name)" -
 - `project_name`: リソース名プレフィックス
 - `aws_region`: デプロイ先リージョン
 - `cognito_domain_prefix`: Cognito Hosted UI ドメインのプレフィックス
-- `callback_urls`: ログイン後のリダイレクト URL
-- `logout_urls`: ログアウト後のリダイレクト URL
-  - このサンプルでは CloudFront ドメインから自動生成されます
+- `documents_max_upload_bytes`: アップロードできる PDF の最大サイズ
+- `upload_url_expires_seconds`: S3 へのアップロード URL 有効期限
+- `download_url_expires_seconds`: PDF 表示用 URL 有効期限
 
-## 次の拡張
+## PDF アップロードの流れ
 
-- API Gateway + Lambda を追加して `/me` や将来のアップロード API を実装
-- private S3 バケットを文献保管にも流用
-- presigned URL で HTML / PDF アップロードを追加
+1. ログイン後、静的フロントが Cognito の `access_token` を使って `POST /uploads` を呼びます
+2. API は presigned `PUT` URL を返し、ブラウザが PDF を S3 へ直接アップロードします
+3. フロントは `POST /documents/{id}/complete` を呼び、DynamoDB 上の状態を `ready` に更新します
+4. `GET /documents` で一覧取得、`GET /documents/{id}/download-url` で一時 URL を発行して PDF を開きます
+
+## API 実装メモ
+
+- `api/` 配下の Python コードは `uv` 前提です
+- Lambda は Terraform の `archive_file` で `api/src` を zip 化してデプロイします
+- API Gateway 側で Cognito JWT authorizer を使うため、Lambda 側で署名検証コードは持っていません

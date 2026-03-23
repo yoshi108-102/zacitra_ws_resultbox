@@ -19,3 +19,21 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "documents_max_upload_bytes" {
+  description = "Maximum allowed PDF size in bytes."
+  type        = number
+  default     = 26214400
+}
+
+variable "upload_url_expires_seconds" {
+  description = "Expiration time for upload URLs in seconds."
+  type        = number
+  default     = 900
+}
+
+variable "download_url_expires_seconds" {
+  description = "Expiration time for download URLs in seconds."
+  type        = number
+  default     = 300
+}

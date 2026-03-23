@@ -27,3 +27,18 @@ output "cognito_hosted_ui_domain" {
   value       = "${aws_cognito_user_pool_domain.main.domain}.auth.${var.aws_region}.amazoncognito.com"
   description = "Cognito Hosted UI domain."
 }
+
+output "documents_bucket_name" {
+  value       = aws_s3_bucket.documents.bucket
+  description = "S3 bucket for uploaded PDF documents."
+}
+
+output "documents_table_name" {
+  value       = aws_dynamodb_table.documents.name
+  description = "DynamoDB table for uploaded document metadata."
+}
+
+output "documents_api_base_url" {
+  value       = aws_apigatewayv2_stage.documents_default.invoke_url
+  description = "Base URL for the documents API."
+}

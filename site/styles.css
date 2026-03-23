@@ -59,7 +59,8 @@ body {
 }
 
 h1,
-h2 {
+h2,
+h3 {
   margin: 0;
   line-height: 1.1;
 }
@@ -70,6 +71,10 @@ h1 {
 
 h2 {
   font-size: clamp(1.6rem, 3vw, 2.6rem);
+}
+
+h3 {
+  font-size: 1.35rem;
 }
 
 .lead {
@@ -148,6 +153,130 @@ dd {
   line-height: 1.7;
 }
 
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.dashboard-card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.section-copy {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.upload-form {
+  margin-top: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.file-field {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px dashed rgba(15, 118, 110, 0.35);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.field-label {
+  font-weight: 700;
+}
+
+.file-field input {
+  width: 100%;
+}
+
+.status-text,
+.empty-state {
+  margin: 16px 0 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.status-error {
+  color: #b42318;
+}
+
+.document-list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.document-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.document-info {
+  min-width: 0;
+}
+
+.document-name {
+  margin: 0;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.document-meta {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.document-status {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.document-actions {
+  flex-shrink: 0;
+}
+
+.button-small {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .hidden {
   display: none;
 }
@@ -163,6 +292,12 @@ dd {
   }
 
   .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-heading,
+  .document-item {
     flex-direction: column;
     align-items: flex-start;
   }
