@@ -45,31 +45,24 @@ cp infra/terraform.tfvars.example infra/terraform.tfvars
 3. デプロイします
 
 ```bash
-cd infra
-terraform init
-terraform apply
+make deploy
 ```
 
 4. `terraform output` に出る CloudFront ドメインへアクセスします
-5. その値を使って `site/config.js` を生成し、S3 バケットへ配信ファイルを配置します
+5. `make deploy` は内部で `terraform apply` の後に `site/config.js` を生成し、S3 バケットへ静的ファイルを再配信します
 
 ```bash
-./scripts/render_site_config.sh \
-  "$(cd infra && terraform output -raw aws_region)" \
-  "$(cd infra && terraform output -raw cognito_hosted_ui_domain)" \
-  "$(cd infra && terraform output -raw cognito_user_pool_client_id)" \
-  "$(cd infra && terraform output -raw cloudfront_domain_name)" \
-  "$(cd infra && terraform output -raw documents_api_base_url)" \
-  > site/config.js
+make site-config
 ```
 
-次に `site/` を S3 へアップロードします
+静的ファイルだけ再配信したい場合は次を使います
 
 ```bash
-aws s3 sync site/ "s3://$(cd infra && terraform output -raw site_bucket_name)" --delete
+make site-sync
 ```
 
-初回は `terraform apply` 後に `site/config.js` を埋めてから、`site/` 配下を S3 にアップロードしてください
+`terraform` だけ操作したい場合は `make infra-plan` / `make infra-apply` も使えます。
+`terraform apply` を無人化したい場合は `make deploy TF_APPLY_ARGS=-auto-approve` のように引数を渡せます。
 
 ## 主要な変数
 
