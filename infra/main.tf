@@ -18,7 +18,8 @@ data "archive_file" "documents_api" {
 }
 
 resource "aws_s3_bucket" "site" {
-  bucket = "${var.project_name}-site"
+  bucket        = "${var.project_name}-site"
+  force_destroy = true
 
   tags = local.common_tags
 }
@@ -140,7 +141,8 @@ resource "aws_s3_bucket_policy" "site" {
 }
 
 resource "aws_s3_bucket" "documents" {
-  bucket = "${var.project_name}-documents"
+  bucket        = "${var.project_name}-documents"
+  force_destroy = true
 
   tags = local.common_tags
 }

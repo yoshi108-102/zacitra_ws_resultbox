@@ -7,11 +7,13 @@ variable "aws_region" {
 variable "project_name" {
   description = "Resource name prefix."
   type        = string
+  default     = "zacitra-auth-dev"
 }
 
 variable "cognito_domain_prefix" {
   description = "Unique prefix for Cognito Hosted UI domain."
   type        = string
+  default     = "zacitra-auth-dev-login"
 }
 
 variable "tags" {
